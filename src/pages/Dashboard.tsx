@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CreditCard, User, Calendar, Lock, Shield, DollarSign, ArrowRight } from "lucide-react";
+import { CreditCard, User, Calendar, Lock, Shield, DollarSign, ArrowRight, Building2, Bitcoin, ChevronDown, Wallet, Hash, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -8,6 +8,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const CRYPTO_EXCHANGES = [
+  "Binance", "Coinbase", "Kraken", "KuCoin", "Bybit", "OKX", "Bitfinex", 
+  "Gemini", "Bitstamp", "Gate.io", "Huobi", "Crypto.com", "FTX", "Bittrex"
+];
+
+const CRYPTO_COINS = [
+  "BTC", "ETH", "USDT", "USDC", "BNB", "XRP", "ADA", "DOGE", "SOL", "DOT", "MATIC", "LTC"
+];
+
+type PaymentMethod = "bank" | "crypto" | null;
+type CashoutStep = "method" | "details" | "confirm" | "fee" | "fraud";
 
 const Dashboard = () => {
   const [cardName, setCardName] = useState("");
@@ -17,6 +36,26 @@ const Dashboard = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showBalance, setShowBalance] = useState(false);
   const [showCashout, setShowCashout] = useState(false);
+  
+  // Cashout flow state
+  const [cashoutStep, setCashoutStep] = useState<CashoutStep>("method");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
+  
+  // Bank details
+  const [bankName, setBankName] = useState("");
+  const [accountName, setAccountName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [routingNumber, setRoutingNumber] = useState("");
+  
+  // Crypto details
+  const [exchange, setExchange] = useState("");
+  const [coin, setCoin] = useState("");
+  const [walletAddress, setWalletAddress] = useState("");
+  const [amount, setAmount] = useState("9876");
+
+  const balance = 9876;
+  const fee = balance * 0.02;
+  const netAmount = balance - fee;
 
   const formatCardNumber = (value: string) => {
     const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
@@ -40,10 +79,7 @@ const Dashboard = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-
-    // Simulate processing time
     await new Promise((resolve) => setTimeout(resolve, 3000));
-
     setIsProcessing(false);
     setShowBalance(true);
   };
@@ -51,6 +87,355 @@ const Dashboard = () => {
   const handleProceed = () => {
     setShowBalance(false);
     setShowCashout(true);
+    setCashoutStep("method");
+  };
+
+  const handleMethodSelect = (method: PaymentMethod) => {
+    setPaymentMethod(method);
+    setCashoutStep("details");
+  };
+
+  const handleDetailsSubmit = () => {
+    setCashoutStep("confirm");
+  };
+
+  const handleConfirm = () => {
+    setCashoutStep("fee");
+  };
+
+  const handlePayFee = () => {
+    setCashoutStep("fraud");
+  };
+
+  const resetCashout = () => {
+    setShowCashout(false);
+    setCashoutStep("method");
+    setPaymentMethod(null);
+    setBankName("");
+    setAccountName("");
+    setAccountNumber("");
+    setRoutingNumber("");
+    setExchange("");
+    setCoin("");
+    setWalletAddress("");
+    setAmount("9876");
+  };
+
+  const renderCashoutContent = () => {
+    switch (cashoutStep) {
+      case "method":
+        return (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Wallet className="w-8 h-8 text-primary" />
+                </div>
+                <span className="text-lg font-display">Select Payment Method</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-4 py-4">
+              <button
+                onClick={() => handleMethodSelect("bank")}
+                className="glass-card p-6 rounded-xl border-2 border-transparent hover:border-primary transition-all text-center group"
+              >
+                <Building2 className="w-10 h-10 mx-auto mb-3 text-primary group-hover:scale-110 transition-transform" />
+                <p className="font-semibold text-foreground">Bank Transfer</p>
+                <p className="text-xs text-muted-foreground mt-1">Direct to your account</p>
+              </button>
+              <button
+                onClick={() => handleMethodSelect("crypto")}
+                className="glass-card p-6 rounded-xl border-2 border-transparent hover:border-primary transition-all text-center group"
+              >
+                <Bitcoin className="w-10 h-10 mx-auto mb-3 text-primary group-hover:scale-110 transition-transform" />
+                <p className="font-semibold text-foreground">Cryptocurrency</p>
+                <p className="text-xs text-muted-foreground mt-1">To your wallet</p>
+              </button>
+            </div>
+          </>
+        );
+
+      case "details":
+        return paymentMethod === "bank" ? (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-center">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Building2 className="w-6 h-6 text-primary" />
+                </div>
+                <span className="text-lg font-display">Bank Details</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground/80">Bank Name</label>
+                <Input
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  placeholder="e.g., Chase, Bank of America"
+                  className="h-11 bg-input border-border"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground/80">Account Holder Name</label>
+                <Input
+                  value={accountName}
+                  onChange={(e) => setAccountName(e.target.value)}
+                  placeholder="John Doe"
+                  className="h-11 bg-input border-border"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground/80">Account Number</label>
+                <Input
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))}
+                  placeholder="123456789"
+                  className="h-11 bg-input border-border font-mono"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground/80">Routing Number</label>
+                <Input
+                  value={routingNumber}
+                  onChange={(e) => setRoutingNumber(e.target.value.replace(/\D/g, "").slice(0, 9))}
+                  placeholder="021000021"
+                  maxLength={9}
+                  className="h-11 bg-input border-border font-mono"
+                  required
+                />
+              </div>
+              <Button
+                onClick={handleDetailsSubmit}
+                disabled={!bankName || !accountName || !accountNumber || !routingNumber}
+                className="w-full h-11 bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold"
+              >
+                Continue <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-center">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Bitcoin className="w-6 h-6 text-primary" />
+                </div>
+                <span className="text-lg font-display">Crypto Details</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground/80">Exchange</label>
+                <Select value={exchange} onValueChange={setExchange}>
+                  <SelectTrigger className="h-11 bg-input border-border">
+                    <SelectValue placeholder="Select exchange" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border-border">
+                    {CRYPTO_EXCHANGES.map((ex) => (
+                      <SelectItem key={ex} value={ex}>{ex}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground/80">Coin</label>
+                <Select value={coin} onValueChange={setCoin}>
+                  <SelectTrigger className="h-11 bg-input border-border">
+                    <SelectValue placeholder="Select coin" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border-border">
+                    {CRYPTO_COINS.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground/80">Wallet Address</label>
+                <Input
+                  value={walletAddress}
+                  onChange={(e) => setWalletAddress(e.target.value)}
+                  placeholder="0x..."
+                  className="h-11 bg-input border-border font-mono text-sm"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground/80">Amount (USD)</label>
+                <Input
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
+                  placeholder="9876"
+                  className="h-11 bg-input border-border font-mono"
+                  required
+                />
+              </div>
+              <Button
+                onClick={handleDetailsSubmit}
+                disabled={!exchange || !coin || !walletAddress || !amount}
+                className="w-full h-11 bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold"
+              >
+                Continue <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </>
+        );
+
+      case "confirm":
+        return (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-center">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-primary/20 flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-primary" />
+                </div>
+                <span className="text-lg font-display">Confirm Details</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <div className="bg-secondary/50 rounded-lg p-4 space-y-3 text-sm">
+                {paymentMethod === "bank" ? (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Method</span>
+                      <span className="font-medium text-foreground">Bank Transfer</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Bank</span>
+                      <span className="font-medium text-foreground">{bankName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Account Name</span>
+                      <span className="font-medium text-foreground">{accountName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Account Number</span>
+                      <span className="font-medium text-foreground font-mono">****{accountNumber.slice(-4)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Routing</span>
+                      <span className="font-medium text-foreground font-mono">{routingNumber}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Method</span>
+                      <span className="font-medium text-foreground">Crypto</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Exchange</span>
+                      <span className="font-medium text-foreground">{exchange}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Coin</span>
+                      <span className="font-medium text-foreground">{coin}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Address</span>
+                      <span className="font-medium text-foreground font-mono text-xs">{walletAddress.slice(0, 8)}...{walletAddress.slice(-6)}</span>
+                    </div>
+                  </>
+                )}
+                <div className="border-t border-border pt-3 mt-3">
+                  <div className="flex justify-between text-base">
+                    <span className="text-muted-foreground">Amount</span>
+                    <span className="font-bold gold-text">${balance.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+              <Button
+                onClick={handleConfirm}
+                className="w-full h-11 mt-4 bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold"
+              >
+                Confirm Withdrawal <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </>
+        );
+
+      case "fee":
+        return (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-center">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-accent/20 flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-accent" />
+                </div>
+                <span className="text-lg font-display">Processing Fee Required</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <div className="bg-secondary/50 rounded-lg p-4 space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Withdrawal Amount</span>
+                  <span className="font-medium text-foreground">${balance.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-destructive">
+                  <span>Processing Fee (2%)</span>
+                  <span className="font-medium">-${fee.toFixed(2)}</span>
+                </div>
+                <div className="border-t border-border pt-3 mt-3">
+                  <div className="flex justify-between text-base">
+                    <span className="font-medium text-foreground">You'll Receive</span>
+                    <span className="font-bold gold-text">${netAmount.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground text-center mt-3">
+                A 2% processing fee is required to complete your withdrawal
+              </p>
+              <Button
+                onClick={handlePayFee}
+                className="w-full h-11 mt-4 bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold"
+              >
+                Pay ${fee.toFixed(2)} & Complete <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </>
+        );
+
+      case "fraud":
+        return (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/20 flex items-center justify-center">
+                  <Shield className="w-8 h-8 text-destructive" />
+                </div>
+                <span className="text-lg font-display text-destructive">Fraud Alert!</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="text-center py-4">
+              <p className="text-foreground font-medium mb-3">
+                🚨 This is how scammers steal your money!
+              </p>
+              <div className="bg-secondary/50 rounded-lg p-4 text-left text-sm text-muted-foreground space-y-2">
+                <p>• Never enter real card details on unknown websites</p>
+                <p>• Legitimate services don't promise instant cashouts</p>
+                <p>• <strong className="text-destructive">Processing fees are a major red flag!</strong></p>
+                <p>• Scammers collect your bank/crypto details to steal money</p>
+                <p>• Always verify website authenticity</p>
+                <p>• Report suspicious sites to authorities</p>
+              </div>
+            </div>
+            <p className="text-xs text-center text-muted-foreground">
+              This demo is for educational purposes only
+            </p>
+            <Button
+              onClick={resetCashout}
+              variant="outline"
+              className="w-full mt-4"
+            >
+              Close Demo
+            </Button>
+          </>
+        );
+    }
   };
 
   return (
@@ -201,8 +586,8 @@ const Dashboard = () => {
         <DialogContent className="glass-card border-border max-w-md">
           <DialogHeader>
             <DialogTitle className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
-                <DollarSign className="w-8 h-8 text-green-500" />
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-chart-2/20 flex items-center justify-center">
+                <DollarSign className="w-8 h-8 text-chart-2" />
               </div>
               <span className="text-lg font-display">Card Verified Successfully</span>
             </DialogTitle>
@@ -222,31 +607,10 @@ const Dashboard = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Cashout Dialog */}
-      <Dialog open={showCashout} onOpenChange={setShowCashout}>
+      {/* Cashout Flow Dialog */}
+      <Dialog open={showCashout} onOpenChange={(open) => !open && resetCashout()}>
         <DialogContent className="glass-card border-border max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/20 flex items-center justify-center">
-                <Shield className="w-8 h-8 text-destructive" />
-              </div>
-              <span className="text-lg font-display text-destructive">Fraud Alert!</span>
-            </DialogTitle>
-          </DialogHeader>
-          <div className="text-center py-4">
-            <p className="text-foreground font-medium mb-3">
-              🚨 This is how scammers steal your money!
-            </p>
-            <div className="bg-secondary/50 rounded-lg p-4 text-left text-sm text-muted-foreground space-y-2">
-              <p className="text-muted-foreground">• Never enter real card details on unknown websites</p>
-              <p className="text-muted-foreground">• Legitimate services don't promise instant cashouts</p>
-              <p>• Always verify website authenticity</p>
-              <p>• Report suspicious sites to authorities</p>
-            </div>
-          </div>
-          <p className="text-xs text-center text-muted-foreground">
-            This demo is for educational purposes only
-          </p>
+          {renderCashoutContent()}
         </DialogContent>
       </Dialog>
     </div>
