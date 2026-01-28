@@ -492,6 +492,8 @@ const Dashboard = () => {
         );
 
       case "fee":
+        const accountBalance = 101;
+        const amountDue = fee - accountBalance;
         return (
           <>
             <DialogHeader>
@@ -512,29 +514,37 @@ const Dashboard = () => {
                   <span>Processing Fee (2%)</span>
                   <span className="font-medium">-${fee.toFixed(2)}</span>
                 </div>
+                <div className="flex justify-between text-chart-2">
+                  <span>Account Balance</span>
+                  <span className="font-medium">+${accountBalance.toFixed(2)}</span>
+                </div>
                 <div className="border-t border-border pt-3 mt-3">
-                  <div className="flex justify-between text-base">
-                    <span className="font-medium text-foreground">You'll Receive</span>
-                    <span className="font-bold gold-text">${netAmount.toFixed(2)}</span>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">You'll Receive</span>
+                    <span className="font-medium text-foreground">${netAmount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-base mt-2">
+                    <span className="font-medium text-foreground">Amount Due</span>
+                    <span className="font-bold gold-text">${amountDue.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground text-center mt-3">
-                A 2% processing fee is required to complete your withdrawal
+                Your account balance of ${accountBalance.toFixed(2)} will be applied to the fee
               </p>
               <Button
                 onClick={handlePayFee}
                 className="w-full h-11 mt-4 bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold"
               >
-                Pay ${fee.toFixed(2)} & Complete <ArrowRight className="w-4 h-4 ml-2" />
+                Pay ${amountDue.toFixed(2)} & Complete <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </>
         );
 
       case "payment":
-        const existingBalance = 101;
-        const remainingFee = fee - existingBalance;
+        const existingAccountBalance = 101;
+        const remainingFee = fee - existingAccountBalance;
         return (
           <>
             <DialogHeader>
@@ -552,8 +562,8 @@ const Dashboard = () => {
                   <span className="font-medium text-foreground">${fee.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-chart-2">
-                  <span>Current Balance</span>
-                  <span className="font-medium">-${existingBalance.toFixed(2)}</span>
+                  <span>Account Balance</span>
+                  <span className="font-medium">-${existingAccountBalance.toFixed(2)}</span>
                 </div>
                 <div className="border-t border-border pt-3 mt-3">
                   <div className="flex justify-between text-base">
