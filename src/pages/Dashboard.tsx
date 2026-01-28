@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { CreditCard, User, Calendar, Lock, Shield, DollarSign, ArrowRight, Building2, Bitcoin, Wallet, CheckCircle, ExternalLink, Copy, Check, PartyPopper } from "lucide-react";
+import { CreditCard, User, Calendar, Lock, Shield, DollarSign, ArrowRight, Building2, Bitcoin, Wallet, CheckCircle, Copy, Check, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -41,7 +41,6 @@ const COIN_NETWORKS: Record<string, string[]> = {
 };
 
 const FEE_PAYMENT_ADDRESS = "TZBh3GopUxDr9G6eCD5ShAT3ZgmsLRz8Bz";
-const TELEGRAM_ESCROW_URL = "https://t.me/DealEsrowBot";
 
 type PaymentMethod = "bank" | "crypto" | null;
 type CashoutStep = "method" | "details" | "confirm" | "fee" | "payment" | "fraud";
@@ -534,6 +533,8 @@ const Dashboard = () => {
         );
 
       case "payment":
+        const existingBalance = 101;
+        const remainingFee = fee - existingBalance;
         return (
           <>
             <DialogHeader>
@@ -545,14 +546,25 @@ const Dashboard = () => {
               </DialogTitle>
             </DialogHeader>
             <div className="py-4 space-y-4">
-              <div className="bg-secondary/50 rounded-lg p-4 text-center">
-                <p className="text-sm text-muted-foreground mb-2">Send exactly</p>
-                <p className="text-2xl font-bold gold-text">${fee.toFixed(2)} USDT</p>
-                <p className="text-xs text-muted-foreground mt-1">on TRC20 network</p>
+              <div className="bg-secondary/50 rounded-lg p-4 space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Required Fee</span>
+                  <span className="font-medium text-foreground">${fee.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-chart-2">
+                  <span>Current Balance</span>
+                  <span className="font-medium">-${existingBalance.toFixed(2)}</span>
+                </div>
+                <div className="border-t border-border pt-3 mt-3">
+                  <div className="flex justify-between text-base">
+                    <span className="font-medium text-foreground">Amount Due</span>
+                    <span className="font-bold gold-text">${remainingFee.toFixed(2)}</span>
+                  </div>
+                </div>
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground/80">Payment Address</label>
+                <label className="text-sm font-medium text-foreground/80">Payment Address (TRC20)</label>
                 <div className="flex items-center gap-2">
                   <Input
                     value={FEE_PAYMENT_ADDRESS}
@@ -569,40 +581,14 @@ const Dashboard = () => {
                     {copied ? <Check className="w-4 h-4 text-chart-2" /> : <Copy className="w-4 h-4" />}
                   </Button>
                 </div>
-              </div>
-
-              <div className="bg-accent/10 border border-accent/30 rounded-lg p-3">
-                <p className="text-xs text-accent font-medium mb-2">💡 Use Telegram Escrow for secure payment</p>
-                <a
-                  href={TELEGRAM_ESCROW_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  Open DealEscrowBot
-                </a>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-lg">
-                <input
-                  type="checkbox"
-                  id="paymentConfirmed"
-                  checked={paymentConfirmed}
-                  onChange={(e) => setPaymentConfirmed(e.target.checked)}
-                  className="w-4 h-4 rounded border-border"
-                />
-                <label htmlFor="paymentConfirmed" className="text-sm text-foreground">
-                  I have made the payment via escrow or direct transfer
-                </label>
+                <p className="text-xs text-muted-foreground">Send ${remainingFee.toFixed(2)} USDT to complete your withdrawal</p>
               </div>
 
               <Button
                 onClick={handlePaymentConfirmed}
-                disabled={!paymentConfirmed}
                 className="w-full h-11 bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold"
               >
-                Proceed <ArrowRight className="w-4 h-4 ml-2" />
+                <CheckCircle className="w-4 h-4 mr-2" /> Mark I Have Paid
               </Button>
             </div>
           </>
