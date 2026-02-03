@@ -44,12 +44,6 @@ const Login = () => {
           <p className="text-muted-foreground text-sm mt-1">Premium Financial Services</p>
         </div>
 
-        {/* Warning Banner */}
-        <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 mb-6">
-          <p className="text-xs text-destructive text-center font-medium">
-            ⚠️ EDUCATIONAL DEMO - Fraud Detection Project
-          </p>
-        </div>
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div className="space-y-2">
