@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 // TRC20 USDT contract address on Tron
@@ -13,8 +14,21 @@ interface TRC20Transfer {
   transaction_id: string;
   from: string;
   to: string;
-  quant: string;
+  // TronGrid fields vary by endpoint/version. Common ones:
+  // - `value`: raw integer in token decimals (USDT uses 6)
+  // - `quant`: older field name used by some APIs
+  value?: string;
+  quant?: string;
   block_timestamp: number;
+}
+
+function parseUsdtAmount(tx: TRC20Transfer): number | null {
+  const raw = (tx.value ?? tx.quant)?.toString();
+  if (!raw) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+  // USDT on Tron uses 6 decimals
+  return n / 1_000_000;
 }
 
 serve(async (req) => {
@@ -24,7 +38,19 @@ serve(async (req) => {
   }
 
   try {
-    const { minAmount, timeWindowMinutes = 60 } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const minAmount = Number(body?.minAmount);
+    const timeWindowMinutes = Number(body?.timeWindowMinutes ?? 60);
+
+    if (!Number.isFinite(minAmount) || minAmount <= 0) {
+      return new Response(
+        JSON.stringify({
+          verified: false,
+          error: "Invalid minAmount. Expected a positive number.",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     
     console.log(`Checking for payments >= $${minAmount} USDT in last ${timeWindowMinutes} minutes`);
 
@@ -60,8 +86,8 @@ serve(async (req) => {
       // Check if it's TO our address (incoming payment)
       if (tx.to.toLowerCase() !== FEE_ADDRESS.toLowerCase()) return false;
       
-      // Calculate USDT amount (6 decimals for USDT)
-      const amount = parseFloat(tx.quant) / 1000000;
+      const amount = parseUsdtAmount(tx);
+      if (amount === null) return false;
       
       console.log(`Transaction ${tx.transaction_id}: ${amount} USDT from ${tx.from}`);
       
@@ -73,7 +99,7 @@ serve(async (req) => {
     const latestPayment = validPayments[0];
 
     if (verified && latestPayment) {
-      const amount = parseFloat(latestPayment.quant) / 1000000;
+      const amount = parseUsdtAmount(latestPayment) ?? 0;
       
       console.log(`✅ Payment verified: ${amount} USDT from ${latestPayment.from}`);
       
