@@ -217,10 +217,11 @@ const Dashboard = () => {
       console.log(`Verifying payment of $${amountDue.toFixed(2)} USDT...`);
       
       const { data, error } = await supabase.functions.invoke('verify-payment', {
-        body: { 
+        body: {
           minAmount: amountDue,
-          timeWindowMinutes: 60 
-        }
+          // Users may have paid earlier than 60 minutes ago; allow a wider window.
+          timeWindowMinutes: 60 * 24 * 7,
+        },
       });
 
       console.log('Verification response:', data);
