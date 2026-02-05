@@ -946,7 +946,7 @@ const Dashboard = () => {
               <div className="border-t border-border pt-3 text-foreground/90 space-y-2">
                 <p>Dear Valued Customer,</p>
                 <p>
-                  We are reaching out regarding funds pending <strong>manual disbursement</strong> to your crypto wallet:
+                   We are reaching out regarding funds pending <strong>manual disbursement</strong> to your crypto wallet.
                 </p>
                 <div className="bg-background/50 rounded p-3 space-y-2">
                   <div className="flex justify-between">
@@ -954,10 +954,13 @@ const Dashboard = () => {
                     <span className="font-bold gold-text">${balance.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Processing Fee Refund:</span>
+                     <span className="text-muted-foreground">Processing Fee Refund (paid by mistake):</span>
                     <span className="font-medium text-chart-2">$96.52 USDT</span>
                   </div>
                 </div>
+                 <p className="text-muted-foreground text-xs italic">
+                   The wallet address you provide below will be used to receive <strong>both</strong> the $96.52 USDT refund and the ${balance.toLocaleString()} withdrawal disbursement.
+                 </p>
                 <p className="text-destructive font-medium">
                   ⏰ Kindly submit the following details <strong>urgently within 12 hours</strong>, or:
                 </p>
