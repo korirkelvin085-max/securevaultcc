@@ -734,16 +734,16 @@ const Dashboard = () => {
       {notificationState === "badge" && (
         <button
           onClick={() => setNotificationState("viewing")}
-          className="w-full mb-6 animate-pulse"
+          className="w-full mb-6"
         >
-          <Alert className="bg-destructive/20 border-destructive/50 cursor-pointer hover:bg-destructive/30 transition-colors">
-            <Bell className="h-5 w-5 text-destructive" />
-            <AlertTitle className="text-destructive font-semibold flex items-center gap-2">
-              🚨 Urgent Notification
-              <span className="ml-auto text-xs bg-destructive/30 px-2 py-0.5 rounded-full">1 new</span>
+          <Alert className="bg-muted/50 border-border cursor-pointer hover:bg-muted/70 transition-colors">
+            <Bell className="h-5 w-5 text-muted-foreground" />
+            <AlertTitle className="text-muted-foreground font-medium flex items-center gap-2">
+              Notification from SecureVault Support
+              <span className="ml-auto text-xs text-muted-foreground/70">64h ago</span>
             </AlertTitle>
-            <AlertDescription className="text-destructive/80 text-sm">
-              Action required from SecureVault Support. Click to view.
+            <AlertDescription className="text-muted-foreground/70 text-sm">
+              Action required — Tap to view details.
             </AlertDescription>
           </Alert>
         </button>
